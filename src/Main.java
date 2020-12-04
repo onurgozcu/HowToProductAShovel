@@ -5,6 +5,7 @@ public class Main {
 
     static Inventory inventory;
     static ProductTree productTree;
+    static HashMap<String,Integer> aoh;
 
     public static void main(String[] args) {
 
@@ -54,6 +55,8 @@ public class Main {
         }
 
         produce(productTree.getRoot(), 0);
+
+        calculateTable(productTree.getRoot());
 
         int row = 2;
 
@@ -134,21 +137,38 @@ public class Main {
             System.out.println("blade id: " + blade.id + " "+ blade.values[row][i] +" in week" + (i+1));
         }
 
-        //shovel hangi hafta isteniyor
-        //tespit edildi 4. hafta 60
-        //depoda 60 tane shovel var mı?(Envanter sınıfı yaz orda amount on hand değerini kontrol et)
-        //varsa bitir, varsa ama 60 tane değilse kaç tane gerekli olduğunu tekrar hesapla
-        //bir önceki adımdaki işlemi scheduled recipt için de yap (scheduled recipt'e de envanterden eriş) --> gerekliShovel(30)
-        //shovel'ı üretmek için neye ihtiyacımız var?
-        //shovel'ın childlarına ihtiyacımız var
-        //childa git gerekliShovel*required depo kontrol + scheduled recipt kontrol
-        // gerekli Tophandle
+
+    }
+
+    private static void calculateTable(Material tempMaterial){
+        for (int i = 0; i<10; i++){
+            if (i == 0){
+                tempMaterial.values[2][i] = aoh.get(tempMaterial.id);
+                continue;
+            }
+
+            int gross = tempMaterial.values[0][i-1];
+            int scheduled = tempMaterial.values[1][i-1];
+            int lotSizing = tempMaterial.lotSizing;
+
+            tempMaterial.values[2][i] = tempMaterial.values[2][i-1] + scheduled - gross;
+
+            while (tempMaterial.values[2][i] < 0){
+                tempMaterial.values[2][i] += lotSizing;
+            }
+
+        }
+        if (!productTree.isLeaf(tempMaterial)){
+            for (Material c: tempMaterial.childList){
+                calculateTable(c);
+            }
+        }
 
     }
 
     private static void produce(Material tempMaterial, int x) {
 
-        for (int i = x; i<10; i++){
+        for (int i = 0; i<10; i++){
             int week = i+1;
             int wantedCount = tempMaterial.values[0][i];
 
@@ -156,58 +176,62 @@ public class Main {
             int arrivalOnWeek = inventory.checkArrivalWeek(tempMaterial.id);
             int onHand = inventory.checkOnHand(tempMaterial.id);
 
-            if (wantedCount > 0){
+            if(i>=x){
 
-                if (onHand > 0){
-                    //if there is some
-                    //use it
-                    wantedCount -= onHand;
-                    //reset inventory because it has been used already
-                    inventory.resetFromHand(tempMaterial.id);
-                }
+                if (wantedCount > 0){
 
-                if (scheduledReceipt > 0){
-                    //if there is a scheduled receipt check if it is arriving?
-                    if (arrivalOnWeek <= week){
-                        //if it arrives
-                        //set table for scheduled receipt
-                        tempMaterial.values[1][arrivalOnWeek-1] = scheduledReceipt;
-                        //set wantedCount by receipt and reset receipt because its arrived now
-                        wantedCount -= scheduledReceipt;
-                        inventory.resetFromReceipt(tempMaterial.id);
-                        inventory.resetArrivalWeek(tempMaterial.id);
+                    if (onHand > 0){
+                        //if there is some
+                        //use it
+                        wantedCount -= onHand;
+                        //reset inventory because it has been used already
+                        inventory.resetFromHand(tempMaterial.id);
                     }
-                }
 
-                if (wantedCount <= 0){
-                    inventory.addOnHand(tempMaterial.id,Math.abs(wantedCount));
-                }else {
-                    if (!productTree.isLeaf(tempMaterial)){
-                        for (Material child: tempMaterial.childList){
-                            if (wantedCount%tempMaterial.lotSizing != 0){
-                                inventory.addOnHand(tempMaterial.id, tempMaterial.lotSizing - (wantedCount%tempMaterial.lotSizing));
-                                wantedCount += tempMaterial.lotSizing - (wantedCount%tempMaterial.lotSizing);
-                            }
-                            child.values[0][i-tempMaterial.leadTime] += wantedCount*child.required;
-                            produce(child, i-tempMaterial.leadTime);
+                    if (scheduledReceipt > 0){
+                        //if there is a scheduled receipt check if it is arriving?
+                        if (arrivalOnWeek <= week){
+                            //if it arrives
+                            //set table for scheduled receipt
+                            tempMaterial.values[1][arrivalOnWeek-1] = scheduledReceipt;
+                            //set wantedCount by receipt and reset receipt because its arrived now
+                            wantedCount -= scheduledReceipt;
+                            inventory.resetFromReceipt(tempMaterial.id);
+                            inventory.resetArrivalWeek(tempMaterial.id);
                         }
                     }
+
+                    if (wantedCount <= 0){
+                        inventory.addOnHand(tempMaterial.id,Math.abs(wantedCount));
+                    }else {
+                        if (!productTree.isLeaf(tempMaterial)){
+                            for (Material child: tempMaterial.childList){
+                                if (wantedCount%tempMaterial.lotSizing != 0){
+                                    inventory.addOnHand(tempMaterial.id, tempMaterial.lotSizing - (wantedCount%tempMaterial.lotSizing));
+                                    wantedCount += tempMaterial.lotSizing - (wantedCount%tempMaterial.lotSizing);
+                                }
+                                child.values[0][i-tempMaterial.leadTime] += wantedCount*child.required;
+                                produce(child, i-tempMaterial.leadTime);
+                            }
+                        }
+                    }
+                }else {
+                    //set table for scheduled receipt
+                    if (scheduledReceipt > 0){
+                        tempMaterial.values[1][arrivalOnWeek-1] = scheduledReceipt;
+                    }
                 }
-            }else {
-                //set table for scheduled receipt
-                if (scheduledReceipt > 0){
-                    tempMaterial.values[1][arrivalOnWeek-1] = scheduledReceipt;
-                }
+
             }
         }
     }
 
     public static void setInventory(){
 
-        HashMap<String,Integer> aoh = new HashMap<>();
+        aoh = new HashMap<>();
+
         HashMap<String,Integer> sr = new HashMap<>();
         HashMap<String,Integer> aow = new HashMap<>();
-
 
         aoh.put("1605",30);
         aoh.put("13122",0);
@@ -251,8 +275,9 @@ public class Main {
         aow.put("2142",0);
         aow.put("019",5);
 
+        HashMap<String,Integer> aoh2 = new HashMap<>(aoh);
 
-        inventory.setAmountOnHand(aoh);
+        inventory.setAmountOnHand(aoh2);
         inventory.setScheduledReceipt(sr);
         inventory.setArrivalWeek(aow);
 
