@@ -53,54 +53,85 @@ public class Main {
             productTree.getRoot().values[0][i] = grossReqForShovel[i];
         }
 
-
-
         produce(productTree.getRoot(), 0);
 
-        for (int i = 0; i < 10; i++){
-            System.out.println("topHandle3: "+ topHandle3.values[0][i] +" in week" + (i+1));
-        }
-
-        System.out.println();
-        System.out.println();
-
+        int row = 2;
 
         for (int i = 0; i < 10; i++){
-            System.out.println("topHandle4: "+ topHandle4.values[0][i] +" in week" + (i+1));
-        }
-
-        for (int i = 0; i < 10; i++){
-            System.out.println("topHandle: "+ topHandle.values[0][i] +" in week" + (i+1));
+            System.out.println("shovel id: " + shovel.id + " "+ shovel.values[row][i] +" in week" + (i+1));
         }
 
         System.out.println();
 
         for (int i = 0; i < 10; i++){
-            System.out.println("scope shaft: " + scoopShaft.values[0][i] +" in week" + (i+1));
+            System.out.println("topHandle id: " + topHandle.id + " "+ topHandle.values[row][i] +" in week" + (i+1));
         }
 
         System.out.println();
 
         for (int i = 0; i < 10; i++){
-            System.out.println("shaft: " + shaft.values[0][i] +" in week" + (i+1));
+            System.out.println("scope shaft id: " + scoopShaft.id + " "+ scoopShaft.values[row][i] +" in week" + (i+1));
         }
 
         System.out.println();
 
         for (int i = 0; i < 10; i++){
-            System.out.println("nail: " + nail.values[0][i] +" in week" + (i+1));
+            System.out.println("shaft id: " + shaft.id + " "+ shaft.values[row][i] +" in week" + (i+1));
         }
 
         System.out.println();
 
         for (int i = 0; i < 10; i++){
-            System.out.println("scopeass: " + scoopAssembly.values[0][i] +" in week" + (i+1));
+            System.out.println("nail id: " + nail.id + " "+ nail.values[row][i] +" in week" + (i+1));
+        }
+
+        System.out.println();
+
+
+        for (int i = 0; i < 10; i++){
+            System.out.println("rivet id: " + rivet.id + " "+ rivet.values[row][i] +" in week" + (i+1));
         }
 
         System.out.println();
 
         for (int i = 0; i < 10; i++){
-            System.out.println("rivet: " + rivet.values[0][i] +" in week" + (i+1));
+            System.out.println("scopeass id: " + scoopAssembly.id + " "+ scoopAssembly.values[row][i] +" in week" + (i+1));
+        }
+
+        System.out.println();
+
+        for (int i = 0; i < 10; i++){
+            System.out.println("topHandle2 id: " + topHandle2.id + " "+ topHandle2.values[row][i] +" in week" + (i+1));
+        }
+
+        System.out.println();
+
+        for (int i = 0; i < 10; i++){
+            System.out.println("bracelet id: " + bracelet.id + " "+ bracelet.values[row][i] +" in week" + (i+1));
+        }
+
+        System.out.println();
+
+        for (int i = 0; i < 10; i++){
+            System.out.println("topHandle3 id: " + topHandle3.id + " "+ topHandle3.values[row][i] +" in week" + (i+1));
+        }
+
+        System.out.println();
+
+        for (int i = 0; i < 10; i++){
+            System.out.println("topHandle4 id: " + topHandle4.id + " "+ topHandle4.values[row][i] +" in week" + (i+1));
+        }
+
+        System.out.println();
+
+        for (int i = 0; i < 10; i++){
+            System.out.println("scope id: " + scoop.id + " "+ scoop.values[row][i] +" in week" + (i+1));
+        }
+
+        System.out.println();
+
+        for (int i = 0; i < 10; i++){
+            System.out.println("blade id: " + blade.id + " "+ blade.values[row][i] +" in week" + (i+1));
         }
 
         //shovel hangi hafta isteniyor
@@ -116,25 +147,36 @@ public class Main {
     }
 
     private static void produce(Material tempMaterial, int x) {
+
         for (int i = x; i<10; i++){
             int week = i+1;
             int wantedCount = tempMaterial.values[0][i];
 
-            //tempMaterial.values[2][i] = inventory.checkOnHand(tempMaterial.id);
+            int scheduledReceipt = inventory.checkReceipt(tempMaterial.id);
+            int arrivalOnWeek = inventory.checkArrivalWeek(tempMaterial.id);
+            int onHand = inventory.checkOnHand(tempMaterial.id);
 
             if (wantedCount > 0){
 
-                wantedCount -= inventory.checkOnHand(tempMaterial.id);
-                inventory.resetFromHand(tempMaterial.id);
+                if (onHand > 0){
+                    //if there is some
+                    //use it
+                    wantedCount -= onHand;
+                    //reset inventory because it has been used already
+                    inventory.resetFromHand(tempMaterial.id);
+                }
 
-                if (inventory.checkReceipt(tempMaterial.id) > 0){
-
-                    if (inventory.checkArrivalWeek(tempMaterial.id) <= week){
-                        wantedCount -= inventory.checkReceipt(tempMaterial.id);
+                if (scheduledReceipt > 0){
+                    //if there is a scheduled receipt check if it is arriving?
+                    if (arrivalOnWeek <= week){
+                        //if it arrives
+                        //set table for scheduled receipt
+                        tempMaterial.values[1][arrivalOnWeek-1] = scheduledReceipt;
+                        //set wantedCount by receipt and reset receipt because its arrived now
+                        wantedCount -= scheduledReceipt;
                         inventory.resetFromReceipt(tempMaterial.id);
                         inventory.resetArrivalWeek(tempMaterial.id);
                     }
-
                 }
 
                 if (wantedCount <= 0){
@@ -143,13 +185,18 @@ public class Main {
                     if (!productTree.isLeaf(tempMaterial)){
                         for (Material child: tempMaterial.childList){
                             if (wantedCount%tempMaterial.lotSizing != 0){
-                                wantedCount += tempMaterial.lotSizing - (wantedCount%tempMaterial.lotSizing);
                                 inventory.addOnHand(tempMaterial.id, tempMaterial.lotSizing - (wantedCount%tempMaterial.lotSizing));
+                                wantedCount += tempMaterial.lotSizing - (wantedCount%tempMaterial.lotSizing);
                             }
                             child.values[0][i-tempMaterial.leadTime] += wantedCount*child.required;
                             produce(child, i-tempMaterial.leadTime);
                         }
                     }
+                }
+            }else {
+                //set table for scheduled receipt
+                if (scheduledReceipt > 0){
+                    tempMaterial.values[1][arrivalOnWeek-1] = scheduledReceipt;
                 }
             }
         }
@@ -208,5 +255,6 @@ public class Main {
         inventory.setAmountOnHand(aoh);
         inventory.setScheduledReceipt(sr);
         inventory.setArrivalWeek(aow);
+
     }
 }

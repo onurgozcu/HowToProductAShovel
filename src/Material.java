@@ -15,8 +15,6 @@ public class Material {
                 {0,0,0,0,0,0,0,0,0,0},
                 {0,0,0,0,0,0,0,0,0,0},
                 {0,0,0,0,0,0,0,0,0,0},
-                {0,0,0,0,0,0,0,0,0,0},
-                {0,0,0,0,0,0,0,0,0,0},
                 {0,0,0,0,0,0,0,0,0,0}
         };
         this.id = id;
@@ -36,6 +34,8 @@ public class Material {
         this.required = required;
         this.childList = childList;
     }
+
+
 
     public boolean equals(Material m){
         return this.id.equals(m.id);
