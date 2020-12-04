@@ -1,3 +1,4 @@
+import java.util.ArrayList;
 import java.util.HashMap;
 
 public class Main {
@@ -54,7 +55,7 @@ public class Main {
 
 
 
-        produce(productTree.getRoot());
+        produce(productTree.getRoot(), 0);
 
         for (int i = 0; i < 10; i++){
             System.out.println("topHandle3: "+ topHandle3.values[0][i] +" in week" + (i+1));
@@ -114,12 +115,12 @@ public class Main {
 
     }
 
-    private static void produce(Material tempMaterial) {
-        for (int i = 0; i<10; i++){
+    private static void produce(Material tempMaterial, int x) {
+        for (int i = x; i<10; i++){
             int week = i+1;
             int wantedCount = tempMaterial.values[0][i];
 
-            tempMaterial.values[2][i] = inventory.checkOnHand(tempMaterial.id);
+            //tempMaterial.values[2][i] = inventory.checkOnHand(tempMaterial.id);
 
             if (wantedCount > 0){
 
@@ -143,9 +144,10 @@ public class Main {
                         for (Material child: tempMaterial.childList){
                             if (wantedCount%tempMaterial.lotSizing != 0){
                                 wantedCount += tempMaterial.lotSizing - (wantedCount%tempMaterial.lotSizing);
+                                inventory.addOnHand(tempMaterial.id, tempMaterial.lotSizing - (wantedCount%tempMaterial.lotSizing));
                             }
-                            child.values[0][i-tempMaterial.leadTime] = wantedCount*child.required;
-                            produce(child);
+                            child.values[0][i-tempMaterial.leadTime] += wantedCount*child.required;
+                            produce(child, i-tempMaterial.leadTime);
                         }
                     }
                 }
@@ -154,9 +156,11 @@ public class Main {
     }
 
     public static void setInventory(){
+
         HashMap<String,Integer> aoh = new HashMap<>();
         HashMap<String,Integer> sr = new HashMap<>();
         HashMap<String,Integer> aow = new HashMap<>();
+
 
         aoh.put("1605",30);
         aoh.put("13122",0);
@@ -199,6 +203,7 @@ public class Main {
         aow.put("1118",0);
         aow.put("2142",0);
         aow.put("019",5);
+
 
         inventory.setAmountOnHand(aoh);
         inventory.setScheduledReceipt(sr);

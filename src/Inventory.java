@@ -5,11 +5,12 @@ public class Inventory {
     HashMap<String, Integer> scheduledReceipt;
     HashMap<String, Integer> arrivalWeek;
 
-    public HashMap<String, Integer> getAmountOnHand() {
+
+    public HashMap<String,Integer> getAmountOnHand() {
         return amountOnHand;
     }
 
-    public void setAmountOnHand(HashMap<String, Integer> amountOnHand) {
+    public void setAmountOnHand(HashMap<String,Integer> amountOnHand) {
         this.amountOnHand = amountOnHand;
     }
 
