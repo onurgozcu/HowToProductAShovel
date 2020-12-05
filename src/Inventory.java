@@ -46,7 +46,7 @@ public class Inventory {
         return scheduledReceipt.get(id);
     }
 
-    public void resetFromReceipt(String id){
+    public void resetScheduledReceipt(String id){
         scheduledReceipt.put(id,0);
     }
 

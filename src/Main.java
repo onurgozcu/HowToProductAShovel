@@ -1,4 +1,3 @@
-import java.util.ArrayList;
 import java.util.HashMap;
 
 public class Main {
@@ -8,6 +7,9 @@ public class Main {
     static HashMap<String,Integer> aoh;
 
     public static void main(String[] args) {
+
+        inventory = new Inventory();
+        setInventory();
 
         Material shovel = new Material("1605", "Snow Shovel", 1, 1, 1, null);
         Material topHandle = new Material("13122", "Top handle", 1, 40, 1, null);
@@ -44,9 +46,6 @@ public class Main {
         productTree.add(scoop,scoopAssembly);
         productTree.add(blade,scoopAssembly);
         productTree.add(rivet2,scoopAssembly);
-
-        inventory = new Inventory();
-        setInventory();
 
         int[] grossReqForShovel = {0,0,0,60,100,0,50,0,30,0};
 
@@ -159,12 +158,12 @@ public class Main {
                 tempMaterial.values[3][i] = netReq;
                 tempMaterial.values[4][i-leadTime] = tempMaterial.values[3][i];
 
-                if (lotSizing != 1){
+                if (netReq%lotSizing != 0){
                     tempMaterial.values[6][i] = tempMaterial.values[3][i] + lotSizing - (tempMaterial.values[3][i]%lotSizing);
                 }else {
                     tempMaterial.values[6][i] = tempMaterial.values[3][i];
                 }
-                tempMaterial.values[5][i-1] = tempMaterial.values[6][i];
+                tempMaterial.values[5][i-leadTime] = tempMaterial.values[6][i];
             }
         }
         if (!productTree.isLeaf(tempMaterial)){
@@ -192,6 +191,7 @@ public class Main {
             }
 
         }
+
         if (!productTree.isLeaf(tempMaterial)){
             for (Material c: tempMaterial.childList){
                 calculateOnHandFromPriorPeriod(c);
@@ -222,17 +222,14 @@ public class Main {
                         inventory.resetFromHand(tempMaterial.id);
                     }
 
-                    if (scheduledReceipt > 0){
-                        //if there is a scheduled receipt check if it is arriving?
-                        if (arrivalOnWeek <= week){
-                            //if it arrives
-                            //set table for scheduled receipt
-                            tempMaterial.values[1][arrivalOnWeek-1] = scheduledReceipt;
-                            //set wantedCount by receipt and reset receipt because its arrived now
-                            wantedCount -= scheduledReceipt;
-                            inventory.resetFromReceipt(tempMaterial.id);
-                            inventory.resetArrivalWeek(tempMaterial.id);
-                        }
+                    if (scheduledReceipt > 0 && arrivalOnWeek <= week){
+                        //if there is a scheduled receipt and if it arrives
+                        //set scheduled receipt on table
+                        tempMaterial.values[1][arrivalOnWeek-1] = scheduledReceipt;
+                        //set wantedCount by receipt and reset receipt because its arrived now
+                        wantedCount -= scheduledReceipt;
+                        inventory.resetScheduledReceipt(tempMaterial.id);
+                        inventory.resetArrivalWeek(tempMaterial.id);
                     }
 
                     if (wantedCount <= 0){
