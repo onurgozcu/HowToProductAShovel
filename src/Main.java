@@ -56,9 +56,11 @@ public class Main {
 
         produce(productTree.getRoot(), 0);
 
+        calculateOnHandFromPriorPeriod(productTree.getRoot());
+
         calculateTable(productTree.getRoot());
 
-        int row = 2;
+        int row = 6;
 
         for (int i = 0; i < 10; i++){
             System.out.println("shovel id: " + shovel.id + " "+ shovel.values[row][i] +" in week" + (i+1));
@@ -140,7 +142,39 @@ public class Main {
 
     }
 
-    private static void calculateTable(Material tempMaterial){
+    private static void calculateTable(Material tempMaterial) {
+        for (int i = 0; i<10; i++){
+
+            int gross = tempMaterial.values[0][i];
+            int scheduled = tempMaterial.values[1][i];
+            int onHand = tempMaterial.values[2][i];
+            int leadTime = tempMaterial.leadTime;
+            int lotSizing = tempMaterial.lotSizing;
+
+            if (i >= leadTime && gross > 0){
+                int netReq = gross - scheduled - onHand;
+                if (netReq < 0){
+                    netReq = 0;
+                }
+                tempMaterial.values[3][i] = netReq;
+                tempMaterial.values[4][i-leadTime] = tempMaterial.values[3][i];
+
+                if (lotSizing != 1){
+                    tempMaterial.values[6][i] = tempMaterial.values[3][i] + lotSizing - (tempMaterial.values[3][i]%lotSizing);
+                }else {
+                    tempMaterial.values[6][i] = tempMaterial.values[3][i];
+                }
+                tempMaterial.values[5][i-1] = tempMaterial.values[6][i];
+            }
+        }
+        if (!productTree.isLeaf(tempMaterial)){
+            for (Material c: tempMaterial.childList){
+                calculateTable(c);
+            }
+        }
+    }
+
+    private static void calculateOnHandFromPriorPeriod(Material tempMaterial){
         for (int i = 0; i<10; i++){
             if (i == 0){
                 tempMaterial.values[2][i] = aoh.get(tempMaterial.id);
@@ -160,7 +194,7 @@ public class Main {
         }
         if (!productTree.isLeaf(tempMaterial)){
             for (Material c: tempMaterial.childList){
-                calculateTable(c);
+                calculateOnHandFromPriorPeriod(c);
             }
         }
 
