@@ -1,4 +1,7 @@
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.HashMap;
+import java.util.Scanner;
 
 public class Main {
 
@@ -8,9 +11,69 @@ public class Main {
 
     public static void main(String[] args) {
 
+        productTree = new ProductTree();
         inventory = new Inventory();
-        setInventory();
+        aoh = new HashMap<>();
 
+        File file = new File("C:\\Users\\onurg\\Desktop\\Inventory.txt");
+        try {
+            Scanner scanner = new Scanner(file);
+            String line;
+            boolean isFirstLine = true;
+            while (scanner.hasNextLine()){
+                line = scanner.nextLine();
+                if (isFirstLine){
+                    isFirstLine = false;
+                    continue;
+                }
+
+                String[] properties = line.split(",");
+                Material controlMaterial = productTree.findById(productTree.getRoot(), properties[0]);
+                if (controlMaterial == null){
+                    Material temp = new Material(
+                            properties[0],
+                            properties[1],
+                            Integer.parseInt(properties[2]),
+                            Integer.parseInt(properties[3]),
+                            Integer.parseInt(properties[4]),
+                            null);
+                    if (properties[5].matches("null")){
+                        productTree.setRoot(temp);
+                    }else {
+                        String parentID = properties[5];
+                        Material parent = productTree.findById(productTree.getRoot(), parentID);
+                        if (parent != null){
+                            productTree.add(temp,parent);
+                        }
+                    }
+                    inventory.addOnHand(temp.id,Integer.parseInt(properties[6]));
+                    aoh.put(temp.id,Integer.parseInt(properties[6]));
+                    inventory.addScheduledReceipt(temp.id,Integer.parseInt(properties[7]));
+                    inventory.addArrivalOnWeek(temp.id,Integer.parseInt(properties[8]));
+                }else {
+                    Material temp = new Material(
+                            controlMaterial.values,
+                            properties[0],
+                            properties[1],
+                            Integer.parseInt(properties[2]),
+                            Integer.parseInt(properties[3]),
+                            Integer.parseInt(properties[4]),
+                            null);
+                    String parentID = properties[5];
+                    Material parent = productTree.findById(productTree.getRoot(), parentID);
+                    if (parent != null){
+                        productTree.add(temp,parent);
+                    }
+                }
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+
+
+
+        //setInventory();
+/*
         Material shovel = new Material("1605", "Snow Shovel", 1, 1, 1, null);
         Material topHandle = new Material("13122", "Top handle", 1, 40, 1, null);
         Material scoopShaft = new Material("048", "Scoop-Shaft", 3, 30, 1, null);
@@ -26,8 +89,6 @@ public class Main {
         Material scoop = new Material("2142", "Scoop", 2, 100, 1, null);
         Material blade = new Material("019", "Blade", 2, 50, 1, null);
         Material rivet2 = new Material(rivet.values ,"14127", "Rivet", 1, 100, 6, null);
-
-        productTree = new ProductTree(shovel);
 
         productTree.add(topHandle,shovel);
         productTree.add(scoopShaft,shovel);
@@ -46,10 +107,10 @@ public class Main {
         productTree.add(scoop,scoopAssembly);
         productTree.add(blade,scoopAssembly);
         productTree.add(rivet2,scoopAssembly);
-
+*/
         int[] grossReqForShovel = {0,0,0,60,100,0,50,0,30,0};
 
-        for (int i = 0; i<productTree.getRoot().values[0].length; i++){
+        for (int i = 0; i<productTree.getRoot().values[0].length; ++i){
             productTree.getRoot().values[0][i] = grossReqForShovel[i];
         }
 
@@ -59,85 +120,8 @@ public class Main {
 
         calculateTable(productTree.getRoot());
 
-        int row = 6;
 
-        for (int i = 0; i < 10; i++){
-            System.out.println("shovel id: " + shovel.id + " "+ shovel.values[row][i] +" in week" + (i+1));
-        }
-
-        System.out.println();
-
-        for (int i = 0; i < 10; i++){
-            System.out.println("topHandle id: " + topHandle.id + " "+ topHandle.values[row][i] +" in week" + (i+1));
-        }
-
-        System.out.println();
-
-        for (int i = 0; i < 10; i++){
-            System.out.println("scope shaft id: " + scoopShaft.id + " "+ scoopShaft.values[row][i] +" in week" + (i+1));
-        }
-
-        System.out.println();
-
-        for (int i = 0; i < 10; i++){
-            System.out.println("shaft id: " + shaft.id + " "+ shaft.values[row][i] +" in week" + (i+1));
-        }
-
-        System.out.println();
-
-        for (int i = 0; i < 10; i++){
-            System.out.println("nail id: " + nail.id + " "+ nail.values[row][i] +" in week" + (i+1));
-        }
-
-        System.out.println();
-
-
-        for (int i = 0; i < 10; i++){
-            System.out.println("rivet id: " + rivet.id + " "+ rivet.values[row][i] +" in week" + (i+1));
-        }
-
-        System.out.println();
-
-        for (int i = 0; i < 10; i++){
-            System.out.println("scopeass id: " + scoopAssembly.id + " "+ scoopAssembly.values[row][i] +" in week" + (i+1));
-        }
-
-        System.out.println();
-
-        for (int i = 0; i < 10; i++){
-            System.out.println("topHandle2 id: " + topHandle2.id + " "+ topHandle2.values[row][i] +" in week" + (i+1));
-        }
-
-        System.out.println();
-
-        for (int i = 0; i < 10; i++){
-            System.out.println("bracelet id: " + bracelet.id + " "+ bracelet.values[row][i] +" in week" + (i+1));
-        }
-
-        System.out.println();
-
-        for (int i = 0; i < 10; i++){
-            System.out.println("topHandle3 id: " + topHandle3.id + " "+ topHandle3.values[row][i] +" in week" + (i+1));
-        }
-
-        System.out.println();
-
-        for (int i = 0; i < 10; i++){
-            System.out.println("topHandle4 id: " + topHandle4.id + " "+ topHandle4.values[row][i] +" in week" + (i+1));
-        }
-
-        System.out.println();
-
-        for (int i = 0; i < 10; i++){
-            System.out.println("scope id: " + scoop.id + " "+ scoop.values[row][i] +" in week" + (i+1));
-        }
-
-        System.out.println();
-
-        for (int i = 0; i < 10; i++){
-            System.out.println("blade id: " + blade.id + " "+ blade.values[row][i] +" in week" + (i+1));
-        }
-
+        productTree.print(productTree.getRoot());
 
     }
 
@@ -257,6 +241,8 @@ public class Main {
         }
     }
 
+
+    /*
     public static void setInventory(){
 
         aoh = new HashMap<>();
@@ -312,5 +298,5 @@ public class Main {
         inventory.setScheduledReceipt(sr);
         inventory.setArrivalWeek(aow);
 
-    }
+    }*/
 }
